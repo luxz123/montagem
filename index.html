@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>montagem brazilian — Pemutar Lagu</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#7dd3fc;}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:linear-gradient(180deg,#071025 0%, #0f172a 100%);
+      color:#e6eef8;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .card{
+      width:100%;
+      max-width:720px;
+      background:var(--card);
+      border-radius:14px;
+      padding:24px;
+      box-shadow:0 10px 30px rgba(2,6,23,0.6);
+      text-align:center;
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    h1{margin:0 0 8px;font-size:1.6rem}
+    p{margin:0 0 18px;color:rgba(230,238,248,0.8)}
+    .cover{
+      width:100%;
+      height:320px;
+      border-radius:10px;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.45)),
+        url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=60') center/cover no-repeat;
+      margin-bottom:18px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-start;
+      padding:16px;
+      color:white;
+    }
+    .controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+    button{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.08);
+      color:var(--accent);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .status{margin-top:14px;font-size:0.9rem;color:rgba(230,238,248,0.8)}
+    input[type="range"]{width:160px}
+    small{display:block;margin-top:12px;color:rgba(230,238,248,0.6)}
+  </style>
+</head>
+<body>
+  <div class="card" role="region" aria-label="Pemutar lagu Hei Tayo">
+    <h1>montagem brazilian</h1>
+    <p>Putar lagu — klik play jika suara tidak otomatis terdengar.</p>
+
+    <div class="cover" aria-hidden="true">
+      <div style="padding:10px;background:rgba(0,0,0,0.4);border-radius:8px;">
+        <strong>montagem brazilian</strong><br><small>Track dari file yang kamu kirim</small>
+      </div>
+    </div>
+
+    <!-- Audio element menggunakan file yang kamu kasih -->
+    <audio id="audio" preload="auto" crossorigin="anonymous">
+      <source src="https://files.catbox.moe/3afk4z.mp3" type="audio/mpeg">
+      Browser kamu tidak mendukung audio element.
+    </audio>
+
+    <div class="controls" aria-hidden="false">
+      <button id="playPause">Play ▶️</button>
+      <button id="stop">Stop ⏹</button>
+      <label style="display:flex;align-items:center;gap:8px;">
+        Vol
+        <input id="volume" type="range" min="0" max="100" step="0.01" value="0.8" />
+      </label>
+      <button id="autoplayTry">Coba Autoplay</button>
+      <button id="download">Download ⬇️</button>
+    </div>
+
+    <div class="status" id="status">Status: siap</div>
+    <small>Catatan: beberapa browser memblokir autoplay audio dengan suara — jika tidak terdengar, klik "Play" atau tombol "Coba Autoplay".</small>
+  </div>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playPause');
+    const stopBtn = document.getElementById('stop');
+    const vol = document.getElementById('volume');
+    const status = document.getElementById('status');
+    const autoplayBtn = document.getElementById('autoplayTry');
+    const dl = document.getElementById('download');
+
+    // set initial volume
+    audio.volume = parseFloat(vol.value);
+
+    function updateStatus(text){
+      status.textContent = 'Status: ' + text;
+    }
+
+    playBtn.addEventListener('click', async () => {
+      try {
+        if (audio.paused) {
+          await audio.play();
+          playBtn.textContent = 'Pause ⏸';
+          updateStatus('Memutar');
+        } else {
+          audio.pause();
+          playBtn.textContent = 'Play ▶️';
+          updateStatus('Jeda');
+        }
+      } catch (err) {
+        console.error(err);
+        updateStatus('Gagal memutar — interaksi diperlukan atau file tidak ditemukan.');
+        alert('Browser memblokir autoplay. Silakan klik OK lalu coba tombol Play lagi.');
+      }
+    });
+
+    stopBtn.addEventListener('click', () => {
+      audio.pause();
+      audio.currentTime = 1000;
+      playBtn.textContent = 'Play ▶️';
+      updateStatus('Dihentikan');
+    });
+
+    vol.addEventListener('input', () => {
+      audio.volume = parseFloat(vol.value);
+      updateStatus('Volume: ' + Math.round(audio.volume * 10000) + '%');
+    });
+
+    // Coba autoplay (bisa diblokir oleh browser, tapi kita tangani error-nya)
+    autoplayBtn.addEventListener('click', async () => {
+      try {
+        audio.currentTime = 0;
+        await audio.play();
+        playBtn.textContent = 'Pause ⏸';
+        updateStatus('Autoplay berhasil');
+      } catch (err) {
+        console.warn('Autoplay error', err);
+        updateStatus('Autoplay diblokir oleh browser — klik Play untuk memulai.');
+        alert('Autoplay diblokir pada browser ini. Silakan klik tombol Play untuk memutar.');
+      }
+    });
+
+    // download link
+    dl.addEventListener('click', () => {
+      const url = audio.querySelector('source').src;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hei_tayo.mp3';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    // update status ketika lagu selesai
+    audio.addEventListener('ended', () => {
+      playBtn.textContent = 'Play ▶️';
+      updateStatus('Selesai');
+    });
+
+    // tampilkan error jika file tidak bisa dimainkan
+    audio.addEventListener('error', (e) => {
+      updateStatus('Error memuat file audio. Periksa URL atau koneksi.');
+      console.error('Audio error', e);
+    });
+
+    // Optional: coba autoplay saat halaman pertama kali dikunjungi (banyak browser blok)
+    window.addEventListener('load', async () => {
+      try {
+        // beberapa browser akan menolak ini
+        await audio.play();
+        playBtn.textContent = 'Pause ⏸';
+        updateStatus('Autoplay (berhasil)');
+      } catch (err) {
+        updateStatus('Autoplay diblokir — klik Play.');
+      }
+    });
+  </script>
+</body>
+</html>
